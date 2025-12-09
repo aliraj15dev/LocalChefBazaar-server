@@ -31,6 +31,7 @@ async function run() {
     const dailyMeals = myDB.collection("DailyMeals");
     const reviews = myDB.collection("reviews");
     const favorites = myDB.collection("favorites");
+    const orders = myDB.collection("order_collection");
 
     app.get("/dailymeals", async (req, res) => {
       const cursor = dailyMeals.find();
@@ -59,6 +60,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/orders", async (req, res) => {
+      const result = await orders
+        .find()
+        .sort({ orderTime: -1 })
+        .toArray();
+      res.send(result);
+    });
+
     app.post("/reviews", async (req, res) => {
       const reviewData = req.body;
 
@@ -81,6 +90,12 @@ async function run() {
       }
 
       const result = await favorites.insertOne(favoriteData);
+      res.send(result);
+    });
+
+    app.post("/orders", async (req, res) => {
+      const orderData = req.body;
+      const result = await orders.insertOne(orderData);
       res.send(result);
     });
   } finally {

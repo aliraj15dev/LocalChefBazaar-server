@@ -30,36 +30,59 @@ async function run() {
     const myDB = client.db("LocalChefBazaar");
     const dailyMeals = myDB.collection("DailyMeals");
     const reviews = myDB.collection("reviews");
+    const favorites = myDB.collection("favorites");
 
-    app.get('/dailymeals', async(req, res)=>{
-        const cursor = dailyMeals.find()
-        const result = await cursor.toArray()
-        res.send(result)
-    })
-    app.get('/dailymeals/:id', async(req, res)=>{
-        const {id} = req.params
-        const query = {_id: new ObjectId(id)}
-        const result = await dailyMeals.findOne(query)
-        res.send(result)
-    })
+    app.get("/dailymeals", async (req, res) => {
+      const cursor = dailyMeals.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    app.get("/dailymeals/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await dailyMeals.findOne(query);
+      res.send(result);
+    });
 
-    app.get('/reviews', async(req, res)=>{
-        const cursor = reviews.find()
-        const result = await cursor.limit(6).toArray()
-        res.send(result)
-    })
+    app.get("/reviews", async (req, res) => {
+      const cursor = reviews.find();
+      const result = await cursor.limit(6).toArray();
+      res.send(result);
+    });
 
+    app.get("/reviews/:foodId", async (req, res) => {
+      const foodId = req.params.foodId;
 
+      const query = { foodId };
+      const result = await reviews.find(query).toArray();
 
+      res.send(result);
+    });
 
+    app.post("/reviews", async (req, res) => {
+      const reviewData = req.body;
 
+      const result = await reviews.insertOne(reviewData);
+      res.send(result);
+    });
 
+    app.post("/favorites", async (req, res) => {
+      const favoriteData = req.body;
 
+      const query = {
+        userEmail: favoriteData.userEmail,
+        mealId: favoriteData.mealId,
+      };
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+      const alreadyAdded = await favorites.findOne(query);
+
+      if (alreadyAdded) {
+        return res.send({ message: "Already Added" });
+      }
+
+      const result = await favorites.insertOne(favoriteData);
+      res.send(result);
+    });
   } finally {
   }
 }

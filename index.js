@@ -32,6 +32,7 @@ async function run() {
     const reviews = myDB.collection("reviews");
     const favorites = myDB.collection("favorites");
     const orders = myDB.collection("order_collection");
+    const users = myDB.collection("users");
 
     app.get("/dailymeals", async (req, res) => {
       const cursor = dailyMeals.find();
@@ -61,10 +62,7 @@ async function run() {
     });
 
     app.get("/orders", async (req, res) => {
-      const result = await orders
-        .find()
-        .sort({ orderTime: -1 })
-        .toArray();
+      const result = await orders.find().sort({ orderTime: -1 }).toArray();
       res.send(result);
     });
 
@@ -96,6 +94,41 @@ async function run() {
     app.post("/orders", async (req, res) => {
       const orderData = req.body;
       const result = await orders.insertOne(orderData);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const cursor = users.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      user.role = "user";
+      user.createdAt = new Date();
+
+      const email = user.email;
+      const userExist = await users.findOne({ email });
+
+      if (userExist) {
+        return res.send({ message: "User Exist" });
+      }
+
+      const result = await users.insertOne(user);
+      res.send(result);
+    });
+
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const roleInfo = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          role: roleInfo.role
+        },
+      };
+      const result = await users.updateOne(query, update);
       res.send(result);
     });
   } finally {
